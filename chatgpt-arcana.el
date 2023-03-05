@@ -3,7 +3,7 @@
 ;; Copyright (C) 2023 Carl Lange
 ;; Author: Carl Lange <carl@flax.ie>
 ;; URL: https://github.com/CarlQLange/chatgpt-arcana
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "26.1") (all-the-icons) (pretty-hydra))
 ;; Version: 0.1
 ;;
 ;; This file is not part of GNU Emacs.
@@ -18,6 +18,8 @@
 (require 'cl-lib)
 (require 'request)
 (require 'markdown-mode)
+(require 'all-the-icons)
+(require 'pretty-hydra)
 
 (defgroup chatgpt-arcana nil
   "An Emacs package that uses the OpenAI API to write and modify code and text."
@@ -87,10 +89,8 @@
   '(("^--[-]+\\(.*\\):$" 1 font-lock-constant-face)
     ("^--[-]+" . font-lock-comment-face)))
 
-(use-package all-the-icons
-  :config
-  (add-to-list 'all-the-icons-mode-icon-alist
-                '(chatgpt-arcana-chat-mode all-the-icons-octicon "comment-discussion" :height 1.0 :v-adjust -0.1 :face all-the-icons-purple)))
+(add-to-list 'all-the-icons-mode-icon-alist
+               '(chatgpt-arcana-chat-mode all-the-icons-octicon "comment-discussion" :height 1.0 :v-adjust -0.1 :face all-the-icons-purple))
 
 (defun chatgpt-arcana-get-system-prompt ()
   "Return the system prompt based on the current major mode, or the fallback prompt if the mode is not found."
@@ -354,21 +354,19 @@ If the universal argument is given, use the current buffer mode to set the syste
               command))
           (cdr chatgpt-arcana-common-prompts-alist)))
 
-(use-package pretty-hydra
-  :config
-  (eval `(pretty-hydra-define chatgpt-arcana-hydra (:color blue :quit-key "q" :title "ChatGPT Arcana")
-           ("Query"
-            (("a" chatgpt-arcana-query "Query")
-             ("r" chatgpt-arcana-replace-region "Replace region"))
-            "Insert"
-            (("i" chatgpt-arcana-insert-at-point-with-context "At point with context")
-             ("I" chatgpt-arcana-insert-at-point "At point")
-             ("j" chatgpt-arcana-insert-after-region "Before region")
-             ("J" chatgpt-arcana-insert-before-region "After region"))
-            "Chat"
-            (("c" chatgpt-arcana-start-chat "Start chat"))
-            "Shortcuts"
-            (,@(chatgpt-arcana-generate-prompt-shortcuts))))))
+(eval `(pretty-hydra-define chatgpt-arcana-hydra (:color blue :quit-key "q" :title "ChatGPT Arcana")
+         ("Query"
+          (("a" chatgpt-arcana-query "Query")
+           ("r" chatgpt-arcana-replace-region "Replace region"))
+          "Insert"
+          (("i" chatgpt-arcana-insert-at-point-with-context "At point with context")
+           ("I" chatgpt-arcana-insert-at-point "At point")
+           ("j" chatgpt-arcana-insert-after-region "Before region")
+           ("J" chatgpt-arcana-insert-before-region "After region"))
+          "Chat"
+          (("c" chatgpt-arcana-start-chat "Start chat"))
+          "Shortcuts"
+          (,@(chatgpt-arcana-generate-prompt-shortcuts)))))
 
 
 (provide 'chatgpt-arcana)
