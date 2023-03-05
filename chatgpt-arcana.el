@@ -166,8 +166,8 @@ If TEMP, adds asterisks to the name."
         (search-forward "------- user:" nil t))
       (let ((name
              (chatgpt-arcana--query-api-alist
-              `(((role . "system") (content . ,chatgpt-arcana-generated-buffer-name-prompt))
-                ((role . "user") (content . ,(buffer-substring-no-properties (point) (min (+ 1200 (point)) (point-max)))))))))
+              `(((role . "user") (content . ,(buffer-substring-no-properties (point) (min (+ 1200 (point)) (point-max)))))
+                ((role . "system") (content . ,chatgpt-arcana-generated-buffer-name-prompt))))))
         (cond ((and prefix temp) (concat "*" prefix name "*"))
               (prefix (concat prefix "-" name))
               (temp (concat "*" name "*"))
@@ -214,7 +214,9 @@ If TEMP, adds asterisks to the name."
       (erase-buffer)
       (chatgpt-arcana-chat-mode)
       (insert
-       (let* ((fp (concat system-prompt " Respond in markdown. User input follows." "\n\n" prompt "\n" (and selected-region (concat "\n\n"selected-region)))))
+       (let* ((fp (concat
+                   prompt "\n" (and selected-region (concat "\n\n" selected-region)) "\n\n"
+                   system-prompt " Respond in markdown.")))
          (concat (replace-regexp-in-string "^" "> " fp nil t) "\n\n" chatgpt-arcana-chat-separator " assistant:\n\n" (chatgpt-arcana--query-api fp))))
       (unless (get-buffer-window "*chatgpt-arcana-response*")
         (split-window-horizontally)
@@ -226,7 +228,9 @@ If TEMP, adds asterisks to the name."
   (interactive "sPrompt: ")
   (let ((selected-region (buffer-substring-no-properties (mark) (point))))
     (deactivate-mark)
-    (let ((modified-region (chatgpt-arcana--query-api (concat (chatgpt-arcana-get-system-prompt) "\n" prompt " " selected-region))))
+    (let ((modified-region (chatgpt-arcana--query-api (concat
+                                                       prompt " " selected-region
+                                                       (chatgpt-arcana-get-system-prompt) "\n"))))
       (delete-region (mark) (point))
       (insert modified-region))))
 
@@ -242,10 +246,8 @@ With optional argument IGNORE-REGION, don't pay attention to the selected region
                            nil)))
     (deactivate-mark)
     (save-excursion
-      (let* ((fp (concat (chatgpt-arcana-get-system-prompt)
-                         "\nUser input follows.\n\n"
-                         prompt
-                         (when selected-region (concat "\n" " " selected-region "\n"))))
+      (let* ((fp (concat prompt (when selected-region (concat "\n" " " selected-region "\n"))
+                         (chatgpt-arcana-get-system-prompt)))
              (inserted-text (chatgpt-arcana--query-api fp)))
         (when selected-region
           (if before
@@ -282,7 +284,9 @@ With optional argument IGNORE-REGION, don't pay attention to the selected region
     (let* ((current-point (- (point) 6))
            (num-lines (or num-lines 3))
            (context (buffer-substring-no-properties (pos-bol (- (- num-lines 1))) (pos-eol (+ num-lines 1))))
-           (fp (concat (chatgpt-arcana-get-system-prompt) "\n" "\nYour response will be inserted at [XXXX] in the selected region. Do not exceed the bounds of this context.\n" prompt "\nSelected region:\n\n" context))
+           (fp (concat
+                prompt "\nSelected region:\n\n" context
+                (chatgpt-arcana-get-system-prompt) "\n" "\nYour response will be inserted at [XXXX] in the selected region. Do not exceed the bounds of this context.\n"))
            (modified-context (chatgpt-arcana--query-api fp)))
       (save-excursion
         (goto-char current-point)
@@ -306,11 +310,9 @@ If the universal argument is given, use the current buffer mode to set the syste
               (sp (concat (if current-prefix-arg system-prompt (chatgpt-arcana-get-system-prompt)) " Respond in well-formatted markdown, with headers, tables, lists, and so on." "\n\n"))
               (fp (concat
                    chatgpt-arcana-chat-separator
-                   " system:\n\n"
-                   sp
-                   chatgpt-arcana-chat-separator
                    " user:\n\n"
-                   prompt (and selected-region (concat "\n\n"selected-region)) "\n\n")))
+                   prompt (and selected-region (concat "\n\n"selected-region)) "\n\n"
+                   chatgpt-arcana-chat-separator " system:\n\n" sp)))
          (concat
           fp
           chatgpt-arcana-chat-separator
