@@ -351,7 +351,7 @@ If the universal argument is given, use the current buffer mode to set the syste
                    (key (concat "s" (substring (symbol-name identifier) 0 1)))
                    (command `(,key
                               (lambda () (interactive)
-                                (chatgpt-arcana-query,(cdr prompt)))
+                                (chatgpt-arcana-start-chat,(cdr prompt)))
                               ,label)))
               command))
           (cdr chatgpt-arcana-common-prompts-alist)))
